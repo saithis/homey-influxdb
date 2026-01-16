@@ -43,10 +43,13 @@ npm test  # Uses Mocha test runner with Chai assertions
 - Handles app unload and cleanup
 
 **lib/InfluxDb.js** - InfluxDB client and connection manager
-- Supports both InfluxDB v1.x (username/password) and v2.x (organization/token)
+- Supports InfluxDB v1.x (username/password), v2.x(organization/token) and v3 (token)
 - Buffers measurements in memory (max 2000, writes when queue reaches 1000)
 - Configurable write interval (10-60 seconds, default 10)
 - Auto-detects v2 when organization and token are present
+- Auto-detects v3 when only token is present
+- Uses v2 compatibility API for InfluxDB v3 (bucket as database)
+- Health check handles both v2 JSON responses and v3 plain text "OK" responses
 - Emits 'online'/'offline' events for connection status
 - Uses `http.min` for HTTP requests to InfluxDB
 
@@ -92,9 +95,9 @@ The app uses **Homey Compose** pattern:
 
 Settings stored via Homey Settings API (`homey.settings`):
 - `host`, `protocol`, `port` - InfluxDB connection details
-- `organization`, `token` - InfluxDB v2.x authentication (token-based)
+- `organization`, `token` - InfluxDB v2/v3 authentication (token-based)
 - `username`, `password` - InfluxDB v1.x authentication (basic auth)
-- `database` - Database name (v1.x) or bucket name (v2.x)
+- `database` - Database name (v1.x) or bucket name (v2/v3)
 - `measurement_mode` - Measurement naming strategy:
   - `'by_name'` - Use device name
   - `'by_zone'` - Use zone name

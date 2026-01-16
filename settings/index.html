@@ -71,7 +71,7 @@
             <input class="homey-form-input" id="organization" type="text" maxlength="70">
         </div>
         <div class="homey-form-group">
-            <label class="homey-form-label" for="token" data-i18n="pair.token_label">Token (only for v2):</label>
+            <label class="homey-form-label" for="token" data-i18n="pair.token_label">Token (only for v2 and v3 - type 'admin' for v3):</label>
             <input class="homey-form-input" id="token" type="text" maxlength="255">
         </div>
         <div class="homey-form-group">
@@ -179,11 +179,6 @@
       // If organization is provided, token must be provided (v2 validation)
       if (organization && !token) {
         return Homey.alert('Token is required when using InfluxDB v2 (organization is provided)');
-      }
-
-      // If token is provided, organization must be provided (v2 validation)
-      if (token && !organization) {
-        return Homey.alert('Organization is required when using InfluxDB v2 (token is provided)');
       }
 
       updateView('status');
