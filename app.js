@@ -79,6 +79,14 @@ module.exports = class InfluxDbApp extends Homey.App {
         if (!password || password.length === 0) {
             this.homey.settings.set('password', 'root');
         }
+
+        const version = this.homey.settings.get('version');
+        if (!version || version.length === 0) {
+            // To keep backwards compatibility, we set the version to v2 if organization and token are set, otherwise v1
+            const version = organization && token ? 'v2' : 'v1';
+            this.homey.settings.set('version', version);
+        }
+
         const database = this.homey.settings.get('database');
         if (!database || database.length === 0) {
             this.homey.settings.set('database', 'homey');
@@ -110,6 +118,7 @@ module.exports = class InfluxDbApp extends Homey.App {
         };
         this.homey.settings.on('set', this._onSettingsChanged.bind(this));
         await this._influxDb.updateSettings({
+            version: this.homey.settings.get('version'),
             host: this.homey.settings.get('host'),
             protocol: this.homey.settings.get('protocol'),
             port: this.homey.settings.get('port'),
@@ -134,6 +143,7 @@ module.exports = class InfluxDbApp extends Homey.App {
                 return;
             }
 
+            this.homey.settings.set('version', settings.version);
             this.homey.settings.set('host', settings.host);
             this.homey.settings.set('protocol', settings.protocol);
             this.homey.settings.set('port', settings.port);
@@ -157,6 +167,11 @@ module.exports = class InfluxDbApp extends Homey.App {
             return 'Settings object is missing';
         }
 
+        // Validate version
+        if (!settings.version || !['v1', 'v2', 'v3'].includes(settings.version)) {
+            return 'Version must be v1, v2 or v3';
+        }
+
         // Validate host
         if (!settings.host || typeof settings.host !== 'string' || !settings.host.trim()) {
             return 'Host cannot be empty';
@@ -178,16 +193,34 @@ module.exports = class InfluxDbApp extends Homey.App {
             return 'Database/bucket cannot be empty';
         }
 
-        // Validate v2 authentication (organization and token must both be present or both be absent)
+        // Validate version specific settings
+        const hasUsername = settings.username && settings.username.trim().length > 0;
+        const hasPassword = settings.password && settings.password.trim().length > 0;
         const hasOrganization = settings.organization && settings.organization.trim().length > 0;
         const hasToken = settings.token && settings.token.trim().length > 0;
 
-        if (hasOrganization && !hasToken) {
-            return 'Token is required when organization is provided (InfluxDB v2)';
+        if (settings.version === 'v1') {
+            if (!hasUsername) {
+                return 'Username cannot be empty';
+            }
+            if (!hasPassword) {
+                return 'Password cannot be empty';
+            }
         }
 
-        if (hasToken && !hasOrganization) {
-            return 'Organization is required when token is provided (InfluxDB v2)';
+        if (settings.version === 'v2') {
+            if (!hasOrganization) {
+                return 'Organization cannot be empty';
+            }
+            if (!hasToken) {
+                return 'Token cannot be empty';
+            }
+        }
+
+        if (settings.version === 'v3') {
+            if (!hasToken) {
+                return 'Token cannot be empty';
+            }
         }
 
         return null; // Valid

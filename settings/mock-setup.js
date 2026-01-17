@@ -10,6 +10,7 @@ void function () {
     }, 2000);
 
     Homey.setSettings({
+        version: 'v1',
         host: '',
         protocol: 'http',
         port: '8086',

@@ -50,6 +50,14 @@
 <div id="block_settings" style="display: none;">
     <fieldset class="homey-form-fieldset">
         <div class="homey-form-group">
+            <label class="homey-form-label" for="influxdb_version" data-i18n="pair.influxdb_version_label">InfluxDB Version:</label>
+            <select class="homey-form-select" name="influxdb_version" id="influxdb_version">
+                <option value="v1">v1.x</option>
+                <option value="v2">v2.x</option>
+                <option value="v3">v3.x</option>
+            </select>
+        </div>
+        <div class="homey-form-group">
             <label class="homey-form-label" for="host" data-i18n="pair.host_label">IP address or host name for the
                 InfluxDb database:</label>
             <input class="homey-form-input" id="host" type="text" maxlength="70">
@@ -65,23 +73,20 @@
             <label class="homey-form-label" for="port" data-i18n="pair.port_label">Port number:</label>
             <input class="homey-form-input" id="port" type="text" maxlength="5">
         </div>
-        <div class="homey-form-group">
-            <label class="homey-form-label" for="organization" data-i18n="pair.organization_label">Organization ID
-                (only for v2):</label>
+        <div class="homey-form-group" id="group_organization">
+            <label class="homey-form-label" for="organization" data-i18n="pair.organization_label">Organization ID:</label>
             <input class="homey-form-input" id="organization" type="text" maxlength="70">
         </div>
-        <div class="homey-form-group">
-            <label class="homey-form-label" for="token" data-i18n="pair.token_label">Token (only for v2 and v3 - type 'admin' for v3):</label>
+        <div class="homey-form-group" id="group_token">
+            <label class="homey-form-label" for="token" data-i18n="pair.token_label">Token:</label>
             <input class="homey-form-input" id="token" type="text" maxlength="255">
         </div>
-        <div class="homey-form-group">
-            <label class="homey-form-label" for="username" data-i18n="pair.username_label">Username (only for
-                v1):</label>
+        <div class="homey-form-group" id="group_username">
+            <label class="homey-form-label" for="username" data-i18n="pair.username_label">Username:</label>
             <input class="homey-form-input" id="username" type="text" maxlength="70">
         </div>
-        <div class="homey-form-group">
-            <label class="homey-form-label" for="password" data-i18n="pair.password_label">Password (only for
-                v1):</label>
+        <div class="homey-form-group" id="group_password">
+            <label class="homey-form-label" for="password" data-i18n="pair.password_label">Password:</label>
             <input class="homey-form-input" id="password" type="password" maxlength="70">
         </div>
         <div class="homey-form-group">
@@ -130,6 +135,32 @@
 
     const protocolElement = document.getElementById('protocol');
     const measurementModeElement = document.getElementById('measurement_mode');
+    const influxdbVersionElement = document.getElementById('influxdb_version');
+
+    // Function to show/hide fields based on version
+    const updateFieldsVisibility = function() {
+      const version = influxdbVersionElement.value;
+      
+      // Hide all auth fields first
+      document.getElementById('group_organization').style.display = 'none';
+      document.getElementById('group_token').style.display = 'none';
+      document.getElementById('group_username').style.display = 'none';
+      document.getElementById('group_password').style.display = 'none';
+
+      // Show relevant fields based on version
+      if (version === 'v1') {
+        document.getElementById('group_username').style.display = 'block';
+        document.getElementById('group_password').style.display = 'block';
+      } else if (version === 'v2') {
+        document.getElementById('group_organization').style.display = 'block';
+        document.getElementById('group_token').style.display = 'block';
+      } else if (version === 'v3') {
+        document.getElementById('group_token').style.display = 'block';
+      }
+    };
+
+    // Add event listener for version dropdown changes
+    influxdbVersionElement.addEventListener('change', updateFieldsVisibility);
 
     const getSetting = function (name) {
       return new Promise((resolve, reject) => {
@@ -173,23 +204,43 @@
         return Homey.alert('Database/bucket cannot be empty');
       }
 
+      const version = influxdbVersionElement.value;
       const organization = organizationElement.value.trim();
       const token = tokenElement.value.trim();
+      const username = usernameElement.value.trim();
+      const password = passwordElement.value.trim();
 
-      // If organization is provided, token must be provided (v2 validation)
-      if (organization && !token) {
-        return Homey.alert('Token is required when using InfluxDB v2 (organization is provided)');
+      // Version-specific validation
+      if (version === 'v1') {
+        if (!username) {
+          return Homey.alert('Username is required for InfluxDB v1.x');
+        }
+        if (!password) {
+          return Homey.alert('Password is required for InfluxDB v1.x');
+        }
+      } else if (version === 'v2') {
+        if (!organization) {
+          return Homey.alert('Organization is required for InfluxDB v2.x');
+        }
+        if (!token) {
+          return Homey.alert('Token is required for InfluxDB v2.x');
+        }
+      } else if (version === 'v3') {
+        if (!token) {
+          return Homey.alert('Token is required for InfluxDB v3.x');
+        }
       }
 
       updateView('status');
       Homey.set('settings', {
+        version: version,
         host: host,
         protocol: protocol,
         port: portElement.value,
         organization: organization,
         token: token,
-        username: usernameElement.value,
-        password: passwordElement.value,
+        username: username,
+        password: password,
         database: database,
         measurement_mode: measurementModeElement.value,
         measurement_prefix: measurementPrefixElement.value
@@ -248,6 +299,7 @@
     };
 
     const initialize = async function () {
+      influxdbVersionElement.value = await getSetting('version');
       hostElement.value = await getSetting('host');
       protocolElement.value = await getSetting('protocol');
       portElement.value = await getSetting('port');
@@ -258,6 +310,9 @@
       databaseElement.value = await getSetting('database');
       measurementModeElement.value = await getSetting('measurement_mode');
       measurementPrefixElement.value = await getSetting('measurement_prefix');
+      
+      updateFieldsVisibility();
+      
       await fetchStatus(() => {
         Homey.ready();
       });

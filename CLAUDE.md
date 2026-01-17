@@ -94,6 +94,7 @@ The app uses **Homey Compose** pattern:
 - Run `homeyConfig compose` to generate final `app.json` (do not edit app.json directly)
 
 Settings stored via Homey Settings API (`homey.settings`):
+- `version` - InfluxDB version
 - `host`, `protocol`, `port` - InfluxDB connection details
 - `organization`, `token` - InfluxDB v2/v3 authentication (token-based)
 - `username`, `password` - InfluxDB v1.x authentication (basic auth)
