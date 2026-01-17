@@ -24,6 +24,11 @@
     font-size: 14pt;
 }
 
+.input-hint {
+    color: #999;
+    margin-top: 5px;
+}
+
 .exec_button {
     min-width: 100%;
     background-color: #00c341;

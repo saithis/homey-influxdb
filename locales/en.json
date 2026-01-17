@@ -13,6 +13,7 @@
     "port_label": "Port number:",
     "organization_label": "Organization ID:",
     "token_label": "Token:",
+    "token_v3_note": "Note: For InfluxDB v3, an \"Admin\" token is required. \"Resource\" tokens cannot access the health check endpoint.",
     "username_label": "Username:",
     "password_label": "Password:",
     "database_label": "Database/bucket:",

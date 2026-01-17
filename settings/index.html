@@ -80,6 +80,7 @@
         <div class="homey-form-group" id="group_token">
             <label class="homey-form-label" for="token" data-i18n="pair.token_label">Token:</label>
             <input class="homey-form-input" id="token" type="text" maxlength="255">
+            <small class="input-hint" id="token_v3_note" data-i18n="pair.token_v3_note">Note: For InfluxDB v3, an "Admin" token is required. "Resource" tokens cannot access the health check endpoint.</small>
         </div>
         <div class="homey-form-group" id="group_username">
             <label class="homey-form-label" for="username" data-i18n="pair.username_label">Username:</label>
@@ -146,6 +147,7 @@
       document.getElementById('group_token').style.display = 'none';
       document.getElementById('group_username').style.display = 'none';
       document.getElementById('group_password').style.display = 'none';
+      document.getElementById('token_v3_note').style.display = 'none';
 
       // Show relevant fields based on version
       if (version === 'v1') {
@@ -156,6 +158,7 @@
         document.getElementById('group_token').style.display = 'block';
       } else if (version === 'v3') {
         document.getElementById('group_token').style.display = 'block';
+        document.getElementById('token_v3_note').style.display = 'block';
       }
     };
 
